@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Electricity Consumption Prediction</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+background: linear-gradient(135deg,#2c74e6,#1f6fe5);
+font-family: Arial;
+padding:80px 0;
+color:white;
+overflow:auto;
+}
+
+body{
+background: linear-gradient(135deg,#2c74e6,#1f6fe5);
+font-family: Arial;
+padding:120px 0;
+color:white;
+}
+
+.container-box{
+max-width:1100px;
+margin:auto;
+}
+
+/* FORM TABLE */
+
+.form-table{
+background:rgba(255,255,255,0.15);
+padding:60px;
+border-radius:12px;
+backdrop-filter:blur(10px);
+}
+
+.form-label{
+font-weight:600;
+}
+
+.form-control{
+height:50px;
+font-size:16px;
+}
+
+.btn-predict{
+margin-top:15px;
+width:100%;
+}
+
+/* GRAPH AREA */
+
+.graph-box{
+margin-top:40px;
+background:white;
+padding:40px;
+border-radius:10px;
+max-width:1000px;
+margin:auto;
+overflow:hidden;
+}
+
+canvas{
+max-width:100%;
+}
+
+canvas{
+height:420px !important;
+}
+
+#resultText{
+margin-top:35px;
+margin-bottom:20px;
+text-align:center;
+font-size:20px;
+font-weight:500;
+line-height:1.6;
+color:black;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container-box">
+
+<!-- FORM -->
+
+<div id="formSection" class="form-table">
+
+<div class="row mb-3">
+<label class="col-md-4 form-label">State</label>
+<div class="col-md-8">
+<input type="text" id="state" class="form-control" value="Andhra Pradesh">
+</div>
+</div>
+
+<div class="row mb-3">
+<label class="col-md-4 form-label">Date</label>
+<div class="col-md-8">
+<input type="text" id="date" class="form-control" value="01/01/2026">
+</div>
+</div>
+
+<div class="row mb-3">
+<label class="col-md-4 form-label">Latitude (optional)</label>
+<div class="col-md-8">
+<input type="text" id="lat" class="form-control" placeholder="Enter latitude">
+</div>
+</div>
+
+<div class="row mb-3">
+<label class="col-md-4 form-label">Longitude (optional)</label>
+<div class="col-md-8">
+<input type="text" id="lon" class="form-control" placeholder="Enter longitude">
+</div>
+</div>
+
+<button onclick="predictConsumption()" class="btn btn-primary btn-predict">
+Predict Consumption
+</button>
+
+</div>
+
+<!-- GRAPH RESULT -->
+
+<div id="resultSection" class="graph-box" style="display:none;">
+
+<canvas id="resultChart"></canvas>
+
+<div id="resultText"></div>
+
+<button onclick="predictAgain()" class="btn btn-secondary w-100 mt-3">
+Predict Again
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+let chart;
+
+function predictConsumption(){
+
+let state = document.getElementById("state").value;
+let date  = document.getElementById("date").value;
+
+fetch("http://127.0.0.1:5000/predict",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+state:state,
+date:date
+})
+
+})
+
+.then(response=>response.json())
+
+.then(data=>{
+
+if(data.error){
+alert(data.error);
+return;
+}
+
+let usage = Number(data.usage).toFixed(2);
+
+drawGraph(usage);
+
+document.getElementById("resultText").innerHTML =
+"<b>" + state + "</b> electricity consumption is <b>" + usage + " GWh</b>";
+
+document.getElementById("formSection").style.display="none";
+document.getElementById("resultSection").style.display="block";
+
+})
+
+.catch(error=>{
+console.log(error);
+alert("Server connection failed");
+});
+
+}
+
+function drawGraph(value){
+
+let ctx = document.getElementById("resultChart");
+
+if(chart){
+chart.destroy();
+}
+
+let year = parseInt(document.getElementById("date").value.split("/")[2]);
+
+let years = [
+year-2,
+year-1,
+year,
+year+1,
+year+2
+];
+
+let values = [
+value*0.85,
+value*0.93,
+value,
+value*1.05,
+value*1.12
+];
+
+chart = new Chart(ctx,{
+
+type:'line',
+
+data:{
+labels:years,
+
+datasets:[{
+label:"Electricity Consumption (GWh)",
+data:values,
+borderColor:"#1f6fe5",
+backgroundColor:"rgba(31,111,229,0.2)",
+tension:0.4,
+fill:true
+}]
+},
+
+options:{
+responsive:true,
+maintainAspectRatio:false,
+
+interaction:{
+mode:'index',
+intersect:false
+},
+
+plugins:{
+tooltip:{
+enabled:true,
+callbacks:{
+label:function(context){
+return "Electricity: " + context.parsed.y.toFixed(2) + " GWh";
+}
+}
+}
+},
+
+scales:{
+y:{
+title:{
+display:true,
+text:"Electricity Consumption (GWh)"
+}
+},
+x:{
+title:{
+display:true,
+text:"Year"
+}
+}
+}
+
+}
+
+});
+
+}
+
+function predictAgain(){
+
+document.getElementById("formSection").style.display="block";
+document.getElementById("resultSection").style.display="none";
+
+}
+
+</script>
+
+</body>
+</html>

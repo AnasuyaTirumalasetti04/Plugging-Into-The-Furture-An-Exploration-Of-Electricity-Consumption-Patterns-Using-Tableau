@@ -1,0 +1,17 @@
+body{
+font-family: Arial, sans-serif;
+background-color:#f5f5f5;
+}
+
+h1{
+color:#2c3e50;
+font-weight:bold;
+}
+
+p{
+font-size:18px;
+}
+
+.navbar{
+padding:15px;
+}
