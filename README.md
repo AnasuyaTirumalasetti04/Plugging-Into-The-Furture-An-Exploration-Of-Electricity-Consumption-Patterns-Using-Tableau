@@ -15,7 +15,7 @@ Compare electricity consumption across residential, commercial, and industrial s
 
 Provide actionable insights through interactive visualizations
 
-🛠 Tools & Technologies Used
+🛠 Tools & Technologies Used:
 
 Tableau – Data visualization and dashboard creation
 
